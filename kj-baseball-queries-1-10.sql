@@ -198,7 +198,7 @@ ORDER BY
 	avg_attendance DESC
 LIMIT 5;
 
-WITH highest_five AS (
+WITH lowest_five AS (
 	SELECT 
 		team,
 		park,
@@ -222,8 +222,8 @@ SELECT
 FROM
 	teams
 INNER JOIN
-	highest_five
-	On highest_five.team = teams.teamid
+	lowest_five
+	On lowest_five.team = teams.teamid
 WHERE 
 	yearid = 2016
 ORDER BY
