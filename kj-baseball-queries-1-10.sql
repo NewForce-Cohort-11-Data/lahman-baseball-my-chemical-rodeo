@@ -21,8 +21,8 @@ INNER JOIN
 	USING(yearid)
 WHERE 
 	height = (
-	SELECT MIN(height)
-	FROM people
+		SELECT MIN(height)
+		FROM people
 	)
 	AND teams.teamid = appearances.teamid;
 
@@ -51,7 +51,7 @@ FROM
 INNER JOIN
 	vandy_salaries
 	USING(playerid)
-ORDER BY total_salary DESC NULLS LAST;
+ORDER BY total_salary DESC;
 
 -- 4. Using the fielding table, group players into three groups based on their position: label players with position OF as "Outfield", those with position "SS", "1B", "2B", and "3B" as "Infield", and those with position "P" or "C" as "Battery". Determine the number of putouts made by each of these three groups in 2016.
 WITH labels AS (
@@ -73,6 +73,8 @@ FROM
 INNER JOIN
 	labels
 	USING(playerid)
+WHERE 
+	yearid = '2016'
 GROUP BY 
 	position_label;
 
@@ -83,7 +85,8 @@ SELECT
 	ROUND((SUM(so) / SUM(g)::numeric), 2) AS avg_strikeouts_per_game
 FROM
 	batting
-WHERE yearid >= 1920
+WHERE 
+	yearid >= 1920
 GROUP BY
 	decade;
 
@@ -92,7 +95,8 @@ SELECT
 	ROUND((SUM(hr) / SUM(g)::numeric), 2) AS avg_homeruns_per_game
 FROM
 	batting
-WHERE yearid >= 1920
+WHERE 
+	yearid >= 1920
 GROUP BY
 	decade;
 
@@ -115,7 +119,7 @@ SELECT
 FROM
 	yearly_totals
 WHERE 
-	(total_stolen + total_caught) > 20
+	(total_stolen + total_caught) >= 20
 ORDER BY
 	stolen_success DESC;
 
@@ -191,7 +195,7 @@ FROM
 	teams
 INNER JOIN
 	highest_five
-	On highest_five.team = teams.teamid
+	ON highest_five.team = teams.teamid
 WHERE 
 	yearid = 2016
 ORDER BY
@@ -294,6 +298,7 @@ INNER JOIN
 	ON batting.playerid = people.playerid
 WHERE 
 	yearid = 2016
-	AND ((finalgame::date) - (debut::date))*10 > 36525
+	AND ((finalgame::date) - (debut::date))*10 >= 36525
 ORDER BY 
 	max_homeruns DESC;
+
