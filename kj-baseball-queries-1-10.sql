@@ -80,46 +80,33 @@ GROUP BY
 
 -- 5. Find the average number of strikeouts per game by decade since 1920. Round the numbers you report to 2 decimal places. Do the same for home runs per game. Do you see any trends?
 -- Both seem to be generally increasing over time, though homeruns decreased slightly 2000-2010.
-SELECT
-	(LEFT(yearid::text, 3)||'0')::integer AS decade,
-	ROUND((SUM(so) / SUM(g)::numeric), 2) AS avg_strikeouts_per_game
-FROM
-	batting
-WHERE 
-	yearid >= 1920
-GROUP BY
-	decade;
 
 SELECT
 	(LEFT(yearid::text, 3)||'0')::integer AS decade,
-	ROUND((SUM(hr) / SUM(g)::numeric), 2) AS avg_homeruns_per_game
+	ROUND((SUM(hr) / SUM(g)::numeric), 2) AS avg_homeruns_per_game,
+	ROUND((SUM(so) / SUM(g)::numeric), 2) AS avg_strikeouts_per_game
 FROM
-	batting
+	teams
 WHERE 
 	yearid >= 1920
 GROUP BY
+	decade
+ORDER BY
 	decade;
 
 -- 6. Find the player who had the most success stealing bases in 2016, where success is measured as the percentage of stolen base attempts which are successful. (A stolen base attempt results either in a stolen base or being caught stealing.) Consider only players who attempted at least 20 stolen bases.
-WITH yearly_totals AS (
-	SELECT 
-		playerid,
-		SUM(sb) AS total_stolen,
-		SUM(cs) AS total_caught
-	FROM 
-		batting
-	WHERE 
-		yearid = '2016'
-	GROUP BY 
-		playerid
-)
+
 SELECT 
 	playerid,
-	ROUND((total_stolen / (total_stolen + total_caught)::numeric)*100, 2) AS stolen_success
+	ROUND((SUM(sb) / (SUM(sb) + SUM(cs))::numeric)*100, 2) AS stolen_success
 FROM
-	yearly_totals
+	batting
 WHERE 
-	(total_stolen + total_caught) >= 20
+	yearid = '2016'
+GROUP BY
+	playerid
+HAVING
+	(SUM(sb) + SUM(cs)) >= 20
 ORDER BY
 	stolen_success DESC;
 
@@ -158,7 +145,14 @@ WITH max_per_year AS (
 		yearid
 )
 SELECT 
-	ROUND(((COUNT(yearid) / (2016-1970)::numeric)*100), 2) AS max_winner_percentage
+	ROUND(((COUNT(yearid) / (
+		SELECT 
+			COUNT(DISTINCT yearid)
+		FROM 
+			teams
+		WHERE 
+			yearid BETWEEN 1970 AND 2016
+	)::numeric)*100), 2) AS max_winner_percentage
 FROM
 	teams AS t
 INNER JOIN
@@ -168,6 +162,7 @@ WHERE
 	yearid BETWEEN 1970 AND 2016
 	AND t.w = m.max_wins
 	AND wswin = 'Y';
+	
 	
 -- 8. Using the attendance figures from the homegames table, find the teams and parks which had the top 5 average attendance per game in 2016 (where average attendance is defined as total attendance divided by number of games). Only consider parks where there were at least 10 games played. Report the park name, team name, and average attendance. Repeat for the lowest 5 average attendance.
 WITH highest_five AS (
@@ -199,8 +194,8 @@ INNER JOIN
 WHERE 
 	yearid = 2016
 ORDER BY
-	avg_attendance DESC
-LIMIT 5;
+	avg_attendance DESC;
+
 
 WITH lowest_five AS (
 	SELECT 
@@ -231,8 +226,7 @@ INNER JOIN
 WHERE 
 	yearid = 2016
 ORDER BY
-	avg_attendance 
-LIMIT 5;
+	avg_attendance;
 
 -- 9. Which managers have won the TSN Manager of the Year award in both the National League (NL) and the American League (AL)? Give their full name and the teams that they were managing when they won the award.
 SELECT 
